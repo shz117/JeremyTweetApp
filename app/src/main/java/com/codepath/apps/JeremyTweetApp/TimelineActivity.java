@@ -1,11 +1,13 @@
 package com.codepath.apps.JeremyTweetApp;
 
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.codepath.apps.JeremyTweetApp.R;
 import com.codepath.apps.JeremyTweetApp.models.Tweet;
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 
 public class TimelineActivity extends ActionBarActivity {
 
+    private static final int NEW_TWEET = 20;
     private TwitterClient client;
     private TweetsArrayAdapter aTweets;
     private ArrayList<Tweet> tweets;
@@ -32,8 +35,13 @@ public class TimelineActivity extends ActionBarActivity {
         lvTweets = (ListView) findViewById(R.id.lvTweets);
         tweets = new ArrayList<>();
         aTweets = new TweetsArrayAdapter(this, tweets);
-        aTweets.
         lvTweets.setAdapter(aTweets);
+        lvTweets.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount) {
+                populateTimeline();
+            }
+        });
         client = TwitterApplication.getRestClient();
         populateTimeline();
     }
@@ -43,7 +51,6 @@ public class TimelineActivity extends ActionBarActivity {
             // success
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-                Log.d("debug", response.toString());
                 aTweets.addAll(Tweet.fromJSONArray(response));
             }
 
@@ -51,7 +58,23 @@ public class TimelineActivity extends ActionBarActivity {
             public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
 
             }
-        });
+        }, false);
+    }
+
+    private void refreshTimelie() {
+        client.getHomeTimeline(new JsonHttpResponseHandler() {
+            // success
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                aTweets.clear();
+                aTweets.addAll(Tweet.fromJSONArray(response));
+            }
+
+            // failure
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+
+            }
+        }, true);
     }
 
 
@@ -70,10 +93,39 @@ public class TimelineActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.compose) {
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void onCompose(MenuItem mi) {
+        Intent toCompose = new Intent(this, ComposeTweetActivity.class);
+        startActivityForResult(toCompose, NEW_TWEET);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && requestCode == NEW_TWEET) {
+            String tweetContent = data.getStringExtra("content");
+            postTweet(tweetContent);
+            refreshTimelie();
+        }
+    }
+
+    private void postTweet(String tweetContent) {
+        // call api to post a new tweet.
+        client.postNewTweet(tweetContent, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                Log.d("debug", responseBody.toString());
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Log.d("debug", responseBody.toString());
+            }
+        });
     }
 }

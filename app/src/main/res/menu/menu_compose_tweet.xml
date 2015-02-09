@@ -1,8 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.codepath.apps.JeremyTweetApp.TimelineActivity">
-    <item android:id="@+id/compose" android:title="@string/compose"
+    tools:context="com.codepath.apps.JeremyTweetApp.ComposeTweetActivity">
+    <item android:id="@+id/tweet" android:title="@string/tweet"
         android:orderInCategory="100" app:showAsAction="always"
-        android:onClick="onCompose" />
+        android:onClick="onFinish"/>
 </menu>

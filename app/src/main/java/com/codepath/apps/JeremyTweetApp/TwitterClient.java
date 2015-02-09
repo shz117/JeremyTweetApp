@@ -28,6 +28,7 @@ public class TwitterClient extends OAuthBaseClient {
 	public static final String REST_CONSUMER_KEY = "WFYR6FGcTPD4Dgdg5WEk5rxg8";       // Change this
 	public static final String REST_CONSUMER_SECRET = "kJsij6BzFgtVc6MtcqHCSJTLZTL3J78a9mDv2fMNKn9K0ReO76"; // Change this
 	public static final String REST_CALLBACK_URL = "oauth://jeremytweetapp"; // Change this (here and in manifest)
+    private int since = 1;
 
 	public TwitterClient(Context context) {
 		super(context, REST_API_CLASS, REST_URL, REST_CONSUMER_KEY, REST_CONSUMER_SECRET, REST_CALLBACK_URL);
@@ -49,12 +50,21 @@ public class TwitterClient extends OAuthBaseClient {
     //  GET /statuses/home_timeline.json
     //  count = 25
     //  since_id = 1
-    public void getHomeTimeline(AsyncHttpResponseHandler handler) {
+    public void getHomeTimeline(AsyncHttpResponseHandler handler, boolean refresh) {
+        if (refresh) since = 1;
         String apiUrl = getApiUrl("statuses/home_timeline.json");
         RequestParams params = new RequestParams();
         params.put("count", 25);
-        params.put("since_id", 1);
+        params.put("since_id", since);
+        since += 25;
         getClient().get(apiUrl, params, handler);
+    }
+
+    public void postNewTweet(String content, AsyncHttpResponseHandler handler) {
+        String apiUrl = getApiUrl("statuses/update.json");
+        RequestParams params = new RequestParams();
+        params.put("status", content);
+        getClient().post(apiUrl, params, handler);
     }
 
     // COMPOSE TWEET
