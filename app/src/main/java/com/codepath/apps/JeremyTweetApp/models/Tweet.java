@@ -1,5 +1,10 @@
 package com.codepath.apps.JeremyTweetApp.models;
 
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
+import com.activeandroid.query.Select;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -7,6 +12,8 @@ import org.json.JSONObject;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by jeremyshi on 2/7/15.
@@ -15,10 +22,15 @@ import java.util.ArrayList;
 /*
 *
 * */
-public class Tweet {
-    private  String body;
+@Table(name = "Tweets")
+public class Tweet extends Model {
+    @Column(name = "uid", unique = true, onUniqueConflict = Column.ConflictAction.REPLACE)
     private long uid; //unique id for tweet
+    @Column(name = "body")
+    private  String body;
+    @Column(name = "User", onUpdate = Column.ForeignKeyAction.CASCADE, onDelete = Column.ForeignKeyAction.CASCADE)
     private User user;
+    @Column(name = "createdAt")
     private  String createdAt;
 
     public String getBody() {
@@ -43,7 +55,12 @@ public class Tweet {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        tweet.save();
         return tweet;
+    }
+
+    public Tweet() {
+        super();
     }
 
     public User getUser() {
@@ -62,5 +79,21 @@ public class Tweet {
         }
         return list;
 
+    }
+
+    public static ArrayList<Tweet> fromSQLite() {
+        List<Model> result = null;
+        try {
+            result = new Select()
+                    .from(Tweet.class)
+                    .execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ArrayList<Tweet> ret = new ArrayList<Tweet>();
+        for (Model t: result) {
+            ret.add((Tweet)t);
+        }
+        return ret;
     }
 }

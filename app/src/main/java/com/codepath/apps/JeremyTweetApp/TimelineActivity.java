@@ -1,6 +1,10 @@
 package com.codepath.apps.JeremyTweetApp;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,6 +26,7 @@ import java.util.ArrayList;
 
 public class TimelineActivity extends ActionBarActivity {
 
+    private SwipeRefreshLayout swipeContainer;
     private static final int NEW_TWEET = 20;
     private TwitterClient client;
     private TweetsArrayAdapter aTweets;
@@ -32,6 +37,19 @@ public class TimelineActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_timeline);
+
+        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshTimelie();
+            }
+        });
+        swipeContainer.setColorSchemeResources(android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
         lvTweets = (ListView) findViewById(R.id.lvTweets);
         tweets = new ArrayList<>();
         aTweets = new TweetsArrayAdapter(this, tweets);
@@ -47,18 +65,21 @@ public class TimelineActivity extends ActionBarActivity {
     }
 
     private void populateTimeline() {
-        client.getHomeTimeline(new JsonHttpResponseHandler() {
-            // success
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-                aTweets.addAll(Tweet.fromJSONArray(response));
-            }
+          if (!isOnline()) aTweets.addAll(Tweet.fromSQLite());
+          else {
+              client.getHomeTimeline(new JsonHttpResponseHandler() {
+                  // success
+                  @Override
+                  public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                      aTweets.addAll(Tweet.fromJSONArray(response));
+                  }
 
-            // failure
-            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                  // failure
+                  public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
 
-            }
-        }, false);
+                  }
+              }, false);
+          }
     }
 
     private void refreshTimelie() {
@@ -68,6 +89,7 @@ public class TimelineActivity extends ActionBarActivity {
             public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
                 aTweets.clear();
                 aTweets.addAll(Tweet.fromJSONArray(response));
+                swipeContainer.setRefreshing(false);
             }
 
             // failure
@@ -127,5 +149,12 @@ public class TimelineActivity extends ActionBarActivity {
                 Log.d("debug", responseBody.toString());
             }
         });
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 }

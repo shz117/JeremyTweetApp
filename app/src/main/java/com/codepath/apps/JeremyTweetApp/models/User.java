@@ -1,5 +1,9 @@
 package com.codepath.apps.JeremyTweetApp.models;
 
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,10 +25,15 @@ import org.json.JSONObject;
       "is_translator": false,
 
 * */
-public class User {
-    private String name;
+@Table(name = "Users")
+public class User extends Model {
+    @Column(name = "uid", unique = true, onUniqueConflict = Column.ConflictAction.REPLACE)
     private long uid;
+    @Column(name = "name")
+    private String name;
+    @Column(name = "screenName")
     private String screenName;
+    @Column(name = "profileImageUrl")
     private String profileImageUrl;
 
     public String getName() {
@@ -43,6 +52,10 @@ public class User {
         return profileImageUrl;
     }
 
+    public User() {
+        super();
+    }
+
     public static User fromJSON(JSONObject jsonObject) {
         User user = new User();
         try {
@@ -53,6 +66,7 @@ public class User {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        user.save();
         return user;
     }
 }
