@@ -5,9 +5,11 @@ import org.scribe.builder.api.FlickrApi;
 import org.scribe.builder.api.TwitterApi;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.codepath.oauth.OAuthBaseClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 /*
@@ -67,6 +69,37 @@ public class TwitterClient extends OAuthBaseClient {
         getClient().post(apiUrl, params, handler);
     }
 
+    public void getMetionsTImeLine(AsyncHttpResponseHandler handler) {
+        String apiUrl = getApiUrl("statuses/mentions_timeline.json");
+        RequestParams params = new RequestParams();
+        params.put("count", 25);
+        getClient().get(apiUrl, params, handler);
+    }
+
+    public void getUserTimeline(String screenname, AsyncHttpResponseHandler handler) {
+        String apiUrl = getApiUrl("statuses/user_timeline.json");
+        RequestParams params = new RequestParams();
+        params.put("count", 25);
+        params.put("screen_name", screenname);
+        getClient().get(apiUrl, params, handler);
+    }
+
+    public void getSelfInfo(AsyncHttpResponseHandler handler) {
+        String apiUrl = getApiUrl("account/verify_credentials.json");
+        getClient().get(apiUrl, null, handler);
+    }
+
+    // https://api.twitter.com/1.1/users/show.json?screen_name=rsarver
+    public void getUserInfo(String screenname, AsyncHttpResponseHandler handler) {
+        String apiUrl = getApiUrl("users/show.json");
+        if (screenname == null) {
+            getClient().get(apiUrl, null, handler);
+            return;
+        }
+        RequestParams params = new RequestParams();
+        params.put("screen_name", screenname);
+        getClient().get(apiUrl, params, handler);
+    }
     // COMPOSE TWEET
 
 	/* 1. Define the endpoint URL with getApiUrl and pass a relative path to the endpoint
